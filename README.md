@@ -44,6 +44,28 @@ streamlit run dashboard/app.py
 
 Endpoint pengecekan API tersedia di `GET /health`.
 
-## Status
+## Command yang sudah diimplementasikan
 
-Struktur dan entry point awal sudah tersedia. Handler command selain `/start`, endpoint query database, dan halaman visualisasi akan diimplementasikan pada fase berikutnya.
+- `/start` — registrasi user dan menu bantuan.
+- `/add` — membuat split, menambahkan exercise, dan PR awal melalui percakapan.
+- `/edt` — mengubah nama split, menambah/menghapus exercise, dan mengatur urutan.
+- `/del` — menghapus split atau exercise assignment dengan konfirmasi.
+- `/swo`, `/nxt`, `/prv`, `/pr`, `/end` — menjalankan dan menyelesaikan sesi workout.
+- `/rst` — rest timer menggunakan Telegram JobQueue.
+- `/ntf` — gym reminder dengan menu tambah, edit, lihat, dan nonaktifkan.
+- `/stat` — ringkasan sesi, durasi, set, dan PR.
+- `/cardio` — mencatat dengan format `/cardio treadmill 6.5 20`.
+- `/bbbt` — menyimpan berat, tinggi, dan BMI.
+
+Saat workout aktif, tombol inline digunakan untuk memilih split, navigasi
+exercise, mencatat PR, menjalankan rest timer, dan menyelesaikan sesi. Tombol
+navigasi disesuaikan dengan posisi exercise saat ini.
+
+Menu `/add` juga menyediakan submenu tombol untuk menambah, mengedit, dan
+menghapus split maupun exercise.
+
+Input set dan PR ditampung sementara selama sesi. Data baru disimpan secara
+atomik saat `/end`; exercise yang belum dilakukan disimpan sebagai `0 kg x 0`.
+Setelah `/pr` berhasil, bot otomatis berpindah ke exercise berikutnya.
+
+Antarmuka Streamlit belum dikembangkan lebih lanjut sesuai prioritas implementasi saat ini. Endpoint Flask dan halaman dashboard masih berupa fondasi untuk tahap berikutnya.

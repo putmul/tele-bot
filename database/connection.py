@@ -30,3 +30,5 @@ def register_user(telegram_id, username=None):
     """
     with connection_cursor(commit=True) as cursor:
         cursor.execute(query, (telegram_id, username))
+        cursor.execute("SELECT id FROM users WHERE telegram_id = %s", (telegram_id,))
+        return cursor.fetchone()["id"]

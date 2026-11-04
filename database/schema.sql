@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS workout_splits (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NOT NULL,
     split_name VARCHAR(255) NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_splits_user FOREIGN KEY (user_id) REFERENCES users(id)
         ON DELETE CASCADE,
@@ -51,6 +52,7 @@ CREATE TABLE IF NOT EXISTS workout_sessions (
     started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     ended_at TIMESTAMP NULL,
     duration_seconds INT NULL,
+    current_exercise_order INT NOT NULL DEFAULT 1,
     status VARCHAR(32) NOT NULL DEFAULT 'active',
     CONSTRAINT fk_sessions_user FOREIGN KEY (user_id) REFERENCES users(id)
         ON DELETE CASCADE,

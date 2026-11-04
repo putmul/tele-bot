@@ -1,16 +1,13 @@
-"""Exercise navigation and workout completion commands."""
+"""Backward-compatible exports for exercise navigation commands."""
 
-from telegram import Update
-from telegram.ext import ContextTypes
+from bot.handlers.workout import (
+    end_workout_command,
+    next_exercise_command,
+    previous_exercise_command,
+)
 
-
-async def next_exercise_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Navigasi ke gerakan berikutnya belum tersedia.")
-
-
-async def previous_exercise_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Navigasi ke gerakan sebelumnya belum tersedia.")
-
-
-async def end_workout_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Penyelesaian sesi workout belum tersedia.")
+__all__ = [
+    "next_exercise_command",
+    "previous_exercise_command",
+    "end_workout_command",
+]
