@@ -351,8 +351,7 @@ async def end_workout_command(update: Update, context: ContextTypes.DEFAULT_TYPE
     ):
         await update.effective_message.reply_text(
             f"Gerakan terakhir: {current_exercise['exercise_name']}\n"
-            "Masukkan beban dan reps (contoh: 100 5).\n"
-            "Jika tidak dilakukan, ketik skip untuk menyimpan 0 × 0."
+            "Masukkan beban dan reps (contoh: 80 8)."
         )
         return END_SET
     return await _finish_workout(update, context, session)
