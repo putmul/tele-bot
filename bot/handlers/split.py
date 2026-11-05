@@ -3,7 +3,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes, ConversationHandler
 
-from bot.handlers.start import start_command
+from bot.handlers.start import home_command
 from database.repository import (
     add_exercise_to_split,
     create_split,
@@ -150,7 +150,8 @@ async def edit_split_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif action == "add":
             if not value:
                 raise ValueError("Nama exercise tidak boleh kosong.")
-            add_exercise_to_split(user_id, split_id, value)
+            if not add_exercise_to_split(user_id, split_id, value):
+                raise ValueError("Exercise sudah ada di split ini.")
         elif action == "remove":
             if not value.isdigit() or not remove_exercise_from_split(user_id, split_id, int(value)):
                 raise ValueError("Nomor exercise tidak ditemukan.")
@@ -164,7 +165,7 @@ async def edit_split_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.effective_message.reply_text(f"Gagal mengubah split: {error}")
         return ConversationHandler.END
     await update.effective_message.reply_text("Workout split berhasil diperbarui.")
-    await start_command(update, context)
+    await home_command(update, context)
     return ConversationHandler.END
 
 
@@ -267,7 +268,7 @@ async def delete_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         message = "Exercise berhasil dihapus." if deleted else "Exercise tidak ditemukan."
     await update.effective_message.reply_text(message)
-    await start_command(update, context)
+    await home_command(update, context)
     return ConversationHandler.END
 
 
@@ -323,7 +324,7 @@ async def add_split_pr(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"Gagal menyimpan split: {error}")
         return ConversationHandler.END
     await update.message.reply_text("Workout split berhasil ditambahkan!")
-    await start_command(update, context)
+    await home_command(update, context)
     return ConversationHandler.END
 
 
@@ -352,8 +353,14 @@ async def edit_split_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
             rename_split(update.effective_user.id, split["id"], " ".join(args[2:]))
             await update.message.reply_text("Nama split berhasil diperbarui.")
         elif action == "add" and len(args) >= 3:
-            add_exercise_to_split(update.effective_user.id, split["id"], " ".join(args[2:]))
-            await update.message.reply_text("Exercise berhasil ditambahkan.")
+            added = add_exercise_to_split(
+                update.effective_user.id, split["id"], " ".join(args[2:])
+            )
+            await update.message.reply_text(
+                "Exercise berhasil ditambahkan."
+                if added
+                else "Exercise sudah ada di split ini."
+            )
         elif action == "remove" and len(args) == 3 and args[2].isdigit():
             removed = remove_exercise_from_split(
                 update.effective_user.id, split["id"], int(args[2])

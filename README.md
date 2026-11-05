@@ -46,16 +46,14 @@ Endpoint pengecekan API tersedia di `GET /health`.
 
 ## Command yang sudah diimplementasikan
 
-- `/start` — registrasi user dan menu bantuan.
-- `/add` — membuat split, menambahkan exercise, dan PR awal melalui percakapan.
-- `/edt` — mengubah nama split, menambah/menghapus exercise, dan mengatur urutan.
-- `/del` — menghapus split atau exercise assignment dengan konfirmasi.
-- `/swo`, `/nxt`, `/prv`, `/pr`, `/end` — menjalankan dan menyelesaikan sesi workout.
+- `/home` — registrasi user dan menu utama.
+- `/splits` — membuat dan mengelola split, exercise, dan PR awal.
+- `/start`, `/nxt`, `/prv`, `/pr`, `/end` — menjalankan dan menyelesaikan sesi workout.
 - `/rst` — rest timer menggunakan Telegram JobQueue.
-- `/ntf` — gym reminder dengan menu tambah, edit, lihat, dan nonaktifkan.
+- `/notify` — gym reminder dengan menu tambah, edit, lihat, dan nonaktifkan.
 - `/stat` — ringkasan sesi, durasi, set, dan PR.
 - `/cardio` — mencatat dengan format `/cardio treadmill 6.5 20`.
-- `/bbbt` — menyimpan berat, tinggi, dan BMI.
+- `/BMI` — menyimpan berat, tinggi, dan BMI.
 
 Saat workout aktif, tombol inline digunakan untuk memilih split, navigasi
 exercise, mencatat PR, menjalankan rest timer, dan menyelesaikan sesi. Tombol

@@ -13,11 +13,17 @@ async def statistics_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await update.message.reply_text(f"Gagal mengambil statistik: {error}")
         return
     hours = float(stats["total_duration"]) / 3600
+    cardio = stats["cardio"]
     message = (
         "STATISTIK GYM\n\n"
-        f"Total Gerakan: {stats['total_workouts']}\n"
-        f"Total Jam : {hours:.2f} hours\n"
+        f"Total Workout: {stats['total_workouts']}\n"
+        f"Total Durasi Workout: {hours:.2f} jam\n"
         f"Total Set: {stats['total_sets']}\n\n"
+        "CARDIO:\n"
+        f"Total Aktivitas: {cardio['total_activities']}\n"
+        f"Total Durasi: {float(cardio['total_duration_minutes']):.2f} menit\n"
+        f"Total Jarak: {float(cardio['total_distance_km']):.2f} km\n"
+        f"Rata-rata Kecepatan: {float(cardio['average_speed_kmh']):.2f} km/j\n\n"
         "Personal Records:\n"
     )
     if stats["prs"]:

@@ -6,7 +6,6 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes, ConversationHandler
 
 from bot.services.reminder_service import schedule_rest_timer, schedule_user_reminders
-from bot.handlers.start import start_command
 from database.repository import (
     add_reminders,
     deactivate_reminder,
@@ -100,7 +99,6 @@ async def rest_timer_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
             await update.effective_message.reply_text(
                 f"Timer istirahat dimulai. Pengingat dalam {minutes:g} menit."
             )
-            await start_command(update, context)
             return ConversationHandler.END
         except ValueError:
             await update.effective_message.reply_text("Durasi harus berupa angka lebih dari 0.")
@@ -121,20 +119,7 @@ async def rest_timer_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.effective_message.reply_text(
         f"Timer istirahat dimulai! Pengingat dalam {minutes:g} menit."
     )
-    await start_command(update, context)
     return ConversationHandler.END
-
-
-def _parse_days(value):
-    days = []
-    for item in value.lower().replace(" ", "").split(","):
-        if item not in DAY_NAMES:
-            raise ValueError(f"Hari tidak dikenali: {item}")
-        if DAY_NAMES[item] not in days:
-            days.append(DAY_NAMES[item])
-    if not days:
-        raise ValueError("Masukkan minimal satu hari.")
-    return days
 
 
 def _parse_time(value):
@@ -203,7 +188,9 @@ async def reminder_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.effective_message.reply_text(f"Gagal menyimpan reminder: {error}")
         return ConversationHandler.END
     await update.effective_message.reply_text("Reminder gym berhasil disimpan!")
-    await start_command(update, context)
+    await update.effective_message.reply_text(
+        "Pilih aksi reminder berikutnya:", reply_markup=_menu_markup()
+    )
     return ConversationHandler.END
 
 
@@ -232,7 +219,6 @@ async def reminder_list_callback(update: Update, context: ContextTypes.DEFAULT_T
             for item in reminders
         )
     await update.effective_message.reply_text(text, reply_markup=_menu_markup())
-    await start_command(update, context)
     return ConversationHandler.END
 
 
@@ -301,7 +287,9 @@ async def reminder_edit_time(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await update.effective_message.reply_text(f"Gagal mengubah reminder: {error}")
         return ConversationHandler.END
     await update.effective_message.reply_text("Reminder berhasil diubah.")
-    await start_command(update, context)
+    await update.effective_message.reply_text(
+        "Pilih aksi reminder berikutnya:", reply_markup=_menu_markup()
+    )
     return ConversationHandler.END
 
 
@@ -327,5 +315,4 @@ async def reminder_delete_select(update: Update, context: ContextTypes.DEFAULT_T
         "Reminder berhasil dinonaktifkan." if deleted else "Reminder tidak ditemukan.",
         reply_markup=_menu_markup(),
     )
-    await start_command(update, context)
     return ConversationHandler.END

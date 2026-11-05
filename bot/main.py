@@ -17,7 +17,7 @@ from telegram.ext import (
 )
 
 from bot.handlers.body import BODY_HEIGHT, BODY_WEIGHT, body_height, body_measurement_command, body_weight
-from bot.handlers.cardio import cardio_command
+from bot.handlers.cardio import CARDIO_INPUT, cardio_command, cardio_input
 from bot.handlers.reminder import (
     REMINDER_DELETE_SELECT,
     REMINDER_DAYS,
@@ -72,7 +72,7 @@ from bot.handlers.split import (
     edit_split_menu,
     edit_split_select,
 )
-from bot.handlers.start import start_command
+from bot.handlers.start import home_command
 from bot.handlers.statistics import statistics_command
 from bot.handlers.workout import (
     END_SET,
@@ -93,7 +93,6 @@ from bot.services.reminder_service import schedule_all_reminders
 from config.settings import BOT_TOKEN, DEFAULT_TIMEZONE
 
 logger = logging.getLogger(__name__)
-
 
 async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     preserved = {
@@ -120,7 +119,7 @@ async def end_and_end_conversation(update: Update, context: ContextTypes.DEFAULT
 
 async def start_and_end_conversation(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Reset the current conversation and show the main menu."""
-    await start_command(update, context)
+    await home_command(update, context)
     return ConversationHandler.END
 
 
@@ -162,7 +161,7 @@ def build_application():
     conversations = [
         ConversationHandler(
             entry_points=[
-                CommandHandler("add", add_split_command),
+                CommandHandler("splits", add_split_command),
                 CallbackQueryHandler(add_split_start, pattern=r"^split:add$"),
                 CallbackQueryHandler(edit_split_menu, pattern=r"^split:edit$"),
                 CallbackQueryHandler(delete_split_menu, pattern=r"^split:delete$"),
@@ -196,12 +195,12 @@ def build_application():
             },
             fallbacks=[
                 CommandHandler("cancel", cancel_command),
-                CommandHandler("start", start_and_end_conversation),
+                CommandHandler("home", start_and_end_conversation),
             ],
             allow_reentry=True,
         ),
         ConversationHandler(
-            entry_points=[CommandHandler("swo", start_workout_command)],
+            entry_points=[CommandHandler("start", start_workout_command)],
             states={
                 SELECT_SPLIT: [
                     MessageHandler(text, select_workout_split),
@@ -210,7 +209,7 @@ def build_application():
             },
             fallbacks=[
                 CommandHandler("cancel", cancel_command),
-                CommandHandler("start", start_and_end_conversation),
+                CommandHandler("home", start_and_end_conversation),
             ],
             allow_reentry=True,
         ),
@@ -227,7 +226,7 @@ def build_application():
                 CommandHandler("cancel", cancel_command),
                 CommandHandler("prv", previous_and_end_conversation),
                 CommandHandler("end", end_and_end_conversation),
-                CommandHandler("start", start_and_end_conversation),
+                CommandHandler("home", start_and_end_conversation),
             ],
             allow_reentry=True,
         ),
@@ -239,13 +238,13 @@ def build_application():
             states={REST_MINUTES: [MessageHandler(text, rest_timer_input)]},
             fallbacks=[
                 CommandHandler("cancel", cancel_command),
-                CommandHandler("start", start_and_end_conversation),
+                CommandHandler("home", start_and_end_conversation),
             ],
             allow_reentry=True,
         ),
         ConversationHandler(
             entry_points=[
-                CommandHandler("ntf", reminder_command),
+                CommandHandler("notify", reminder_command),
                 CallbackQueryHandler(reminder_add_start, pattern=r"^reminder:add$"),
                 CallbackQueryHandler(reminder_list_callback, pattern=r"^reminder:list$"),
                 CallbackQueryHandler(reminder_edit_start, pattern=r"^reminder:edit$"),
@@ -277,7 +276,7 @@ def build_application():
             },
             fallbacks=[
                 CommandHandler("cancel", cancel_command),
-                CommandHandler("start", start_and_end_conversation),
+                CommandHandler("home", start_and_end_conversation),
             ],
             allow_reentry=True,
         ),
@@ -294,7 +293,7 @@ def build_application():
                 CommandHandler("cancel", cancel_command),
                 CommandHandler("prv", previous_and_end_conversation),
                 CommandHandler("end", end_and_end_conversation),
-                CommandHandler("start", start_and_end_conversation),
+                CommandHandler("home", start_and_end_conversation),
             ],
             allow_reentry=True,
         ),
@@ -306,19 +305,31 @@ def build_application():
             states={END_SET: [MessageHandler(text, end_set_input)]},
             fallbacks=[
                 CommandHandler("cancel", cancel_command),
-                CommandHandler("start", start_and_end_conversation),
+                CommandHandler("home", start_and_end_conversation),
             ],
             allow_reentry=True,
         ),
         ConversationHandler(
-            entry_points=[CommandHandler("bbbt", body_measurement_command)],
+            entry_points=[
+                CommandHandler("BMI", body_measurement_command),
+                CommandHandler("bmi", body_measurement_command),
+            ],
             states={
                 BODY_WEIGHT: [MessageHandler(text, body_weight)],
                 BODY_HEIGHT: [MessageHandler(text, body_height)],
             },
             fallbacks=[
                 CommandHandler("cancel", cancel_command),
-                CommandHandler("start", start_and_end_conversation),
+                CommandHandler("home", start_and_end_conversation),
+            ],
+            allow_reentry=True,
+        ),
+        ConversationHandler(
+            entry_points=[CommandHandler("cardio", cardio_command)],
+            states={CARDIO_INPUT: [MessageHandler(text, cardio_input)]},
+            fallbacks=[
+                CommandHandler("cancel", cancel_command),
+                CommandHandler("home", start_and_end_conversation),
             ],
             allow_reentry=True,
         ),
@@ -326,11 +337,10 @@ def build_application():
     for conversation in conversations:
         application.add_handler(conversation)
 
-    application.add_handler(CommandHandler("start", start_command))
-    application.add_handler(CommandHandler("help", start_command))
+    application.add_handler(CommandHandler("home", home_command))
+    application.add_handler(CommandHandler("help", home_command))
     application.add_handler(CallbackQueryHandler(previous_exercise_command, pattern=r"^workout:prv$"))
     application.add_handler(CommandHandler("prv", previous_exercise_command))
-    application.add_handler(CommandHandler("cardio", cardio_command))
     application.add_handler(CommandHandler("edt", edit_split_command))
     application.add_handler(CommandHandler("del", delete_split_command))
     application.add_handler(CommandHandler("stat", statistics_command))

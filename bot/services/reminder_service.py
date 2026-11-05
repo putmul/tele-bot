@@ -2,14 +2,23 @@
 
 from datetime import time, timedelta
 
-from database.repository import get_active_reminders
+from bot.services.workout_view import format_exercise, workout_keyboard
+from database.repository import get_active_reminders, get_active_session
 
 
 async def rest_complete_callback(context):
+    chat_id = context.job.chat_id
     await context.bot.send_message(
-        chat_id=context.job.chat_id,
+        chat_id=chat_id,
         text="ISTIRAHAT SELESAI!\n\nWaktunya melanjutkan latihan.",
     )
+    session = get_active_session(chat_id)
+    if session:
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text=format_exercise(chat_id, session),
+            reply_markup=workout_keyboard(session),
+        )
 
 
 def schedule_rest_timer(context, chat_id, minutes):

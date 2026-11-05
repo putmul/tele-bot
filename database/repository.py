@@ -22,10 +22,6 @@ def _user_id(telegram_id):
         connection.close()
 
 
-def get_user_id(telegram_id):
-    return _user_id(telegram_id)
-
-
 def get_splits(telegram_id):
     user_id = _user_id(telegram_id)
     if not user_id:
@@ -35,7 +31,7 @@ def get_splits(telegram_id):
     try:
         cursor.execute(
             """
-            SELECT ws.id, ws.split_name, COUNT(se.id) AS exercise_count
+            SELECT ws.id, ws.split_name, COUNT(DISTINCT se.exercise_id) AS exercise_count
             FROM workout_splits ws
             LEFT JOIN split_exercises se ON se.split_id = ws.id
             WHERE ws.user_id = %s AND ws.is_active = TRUE
@@ -169,6 +165,13 @@ def add_exercise_to_split(telegram_id, split_id, exercise_name):
         )
         exercise_id = cursor.lastrowid
         cursor.execute(
+            "SELECT id FROM split_exercises WHERE split_id = %s AND exercise_id = %s",
+            (split_id, exercise_id),
+        )
+        if cursor.fetchone():
+            connection.rollback()
+            return False
+        cursor.execute(
             """
             SELECT COALESCE(MAX(exercise_order), 0) + 1 AS next_order
             FROM split_exercises WHERE split_id = %s
@@ -202,14 +205,30 @@ def remove_exercise_from_split(telegram_id, split_id, exercise_number):
     try:
         cursor.execute(
             """
-            DELETE se FROM split_exercises se
+            SELECT se.id
+            FROM split_exercises se
             JOIN workout_splits ws ON ws.id = se.split_id
-            WHERE se.split_id = %s AND se.exercise_id = %s AND ws.user_id = %s
+            WHERE se.split_id = %s AND se.exercise_id = %s
+              AND ws.user_id = %s AND ws.is_active = TRUE
             """,
             (split_id, exercise["id"], user_id),
         )
+        relation = cursor.fetchone()
+        if not relation:
+            return False
+        cursor.execute("DELETE FROM split_exercises WHERE id = %s", (relation[0],))
+        cursor.execute(
+            "SELECT id FROM split_exercises WHERE split_id = %s ORDER BY exercise_order",
+            (split_id,),
+        )
+        remaining = cursor.fetchall()
+        for order, relation_row in enumerate(remaining, start=1):
+            cursor.execute(
+                "UPDATE split_exercises SET exercise_order = %s WHERE id = %s",
+                (order, relation_row[0]),
+            )
         connection.commit()
-        return cursor.rowcount > 0
+        return True
     finally:
         cursor.close()
         connection.close()
@@ -351,32 +370,6 @@ def update_session_position(telegram_id, session_id, position):
         connection.close()
 
 
-def add_workout_set(telegram_id, session_id, exercise_id, weight, repetitions):
-    user_id = _user_id(telegram_id)
-    connection = get_connection()
-    cursor = connection.cursor(dictionary=True)
-    try:
-        cursor.execute(
-            "SELECT id FROM workout_sessions WHERE id = %s AND user_id = %s AND status = 'active'",
-            (session_id, user_id),
-        )
-        if not cursor.fetchone():
-            return
-        cursor.execute(
-            "SELECT COALESCE(MAX(set_number), 0) + 1 AS next_set FROM workout_sets WHERE session_id = %s AND exercise_id = %s",
-            (session_id, exercise_id),
-        )
-        set_number = cursor.fetchone()["next_set"]
-        cursor.execute(
-            "INSERT INTO workout_sets (session_id, exercise_id, set_number, repetitions, weight_kg) VALUES (%s, %s, %s, %s, %s)",
-            (session_id, exercise_id, set_number, repetitions, weight),
-        )
-        connection.commit()
-    finally:
-        cursor.close()
-        connection.close()
-
-
 def get_current_pr(telegram_id, exercise_id):
     user_id = _user_id(telegram_id)
     connection = get_connection()
@@ -415,60 +408,6 @@ def get_last_session_set(telegram_id, exercise_id):
             (user_id, exercise_id),
         )
         return cursor.fetchone()
-    finally:
-        cursor.close()
-        connection.close()
-
-
-def record_pr(telegram_id, exercise_id, weight, repetitions):
-    user_id = _user_id(telegram_id)
-    estimated = weight * (1 + repetitions / 30)
-    current = get_current_pr(telegram_id, exercise_id)
-    is_new = not current or estimated > float(current["estimated_1rm"])
-    connection = get_connection()
-    cursor = connection.cursor()
-    try:
-        if is_new:
-            cursor.execute(
-                """
-                INSERT INTO personal_records
-                    (user_id, exercise_id, weight_kg, repetitions, estimated_1rm)
-                VALUES (%s, %s, %s, %s, %s)
-                """,
-                (user_id, exercise_id, weight, repetitions, estimated),
-            )
-            connection.commit()
-    finally:
-        cursor.close()
-        connection.close()
-    return is_new, estimated
-
-
-def complete_session(telegram_id, session_id):
-    user_id = _user_id(telegram_id)
-    connection = get_connection()
-    cursor = connection.cursor(dictionary=True)
-    try:
-        cursor.execute(
-            "SELECT started_at, split_id FROM workout_sessions WHERE id = %s AND user_id = %s AND status = 'active'",
-            (session_id, user_id),
-        )
-        session = cursor.fetchone()
-        if not session:
-            return None
-        ended_at = datetime.now()
-        started_at = session["started_at"]
-        duration = max(0, int((ended_at - started_at).total_seconds()))
-        cursor.execute(
-            """
-            UPDATE workout_sessions
-            SET status = 'completed', ended_at = %s, duration_seconds = %s
-            WHERE id = %s AND user_id = %s
-            """,
-            (ended_at, duration, session_id, user_id),
-        )
-        connection.commit()
-        return {"duration_seconds": duration, "split_id": session["split_id"]}
     finally:
         cursor.close()
         connection.close()
@@ -620,6 +559,18 @@ def get_statistics(telegram_id):
             (user_id,),
         )
         summary = cursor.fetchone()
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS total_activities,
+                   COALESCE(SUM(duration_minutes), 0) AS total_duration_minutes,
+                   COALESCE(SUM(distance_km), 0) AS total_distance_km,
+                   COALESCE(AVG(speed_kmh), 0) AS average_speed_kmh
+            FROM cardio_logs
+            WHERE user_id = %s
+            """,
+            (user_id,),
+        )
+        summary["cardio"] = cursor.fetchone()
         cursor.execute(
             """
             SELECT e.exercise_name, pr.weight_kg, pr.repetitions, pr.estimated_1rm

@@ -3,7 +3,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes, ConversationHandler
 
-from bot.handlers.start import start_command
+from bot.handlers.start import home_command
 from database.repository import save_body_measurement
 
 BODY_WEIGHT, BODY_HEIGHT = range(2)
@@ -41,5 +41,5 @@ async def body_height(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"Gagal menyimpan measurement: {error}")
         return ConversationHandler.END
     await update.message.reply_text(f"Pengukuran berhasil disimpan!\n\nBMI: {bmi:.2f}")
-    await start_command(update, context)
+    await home_command(update, context)
     return ConversationHandler.END

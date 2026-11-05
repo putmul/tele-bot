@@ -1,1 +1,0 @@
-"""Workout business logic placeholder."""
