@@ -5,8 +5,7 @@ Fondasi aplikasi Telegram Bot dan dashboard untuk membantu pencatatan aktivitas 
 ## Struktur awal
 
 - `bot/` — Telegram Bot, command handlers, dan business services.
-- `backend/` — Flask API untuk dashboard.
-- `dashboard/` — Streamlit dashboard dan halaman visualisasi.
+- `dashboard/` — Streamlit dashboard dan halaman visualisasi langsung dari database.
 - `database/` — koneksi MariaDB, schema, dan konstanta database.
 - `config/` — konfigurasi berbasis environment variable.
 
@@ -23,7 +22,8 @@ pip install -r requirements.txt
 
 ### 2. Siapkan konfigurasi
 
-Salin `.env.example` menjadi `.env`, lalu isi `TELEGRAM_BOT_TOKEN` dan konfigurasi MariaDB.
+Salin `.env.example` menjadi `.env`, lalu isi `TELEGRAM_BOT_TOKEN`, konfigurasi MariaDB,
+dan `DASHBOARD_TELEGRAM_ID` dengan Telegram ID user yang ingin ditampilkan.
 
 ### 3. Buat database
 
@@ -35,14 +35,11 @@ Jalankan `database/schema.sql` melalui phpMyAdmin atau client MariaDB di XAMPP.
 # Telegram Bot
 python -m bot.main
 
-# Flask API
-python -m backend.app
-
 # Streamlit Dashboard
 streamlit run dashboard/app.py
 ```
 
-Endpoint pengecekan API tersedia di `GET /health`.
+Dashboard menggunakan koneksi database langsung dan tidak memerlukan server API terpisah.
 
 ## Command yang sudah diimplementasikan
 
@@ -66,4 +63,4 @@ Input set dan PR ditampung sementara selama sesi. Data baru disimpan secara
 atomik saat `/end`; exercise yang belum dilakukan disimpan sebagai `0 kg x 0`.
 Setelah `/pr` berhasil, bot otomatis berpindah ke exercise berikutnya.
 
-Antarmuka Streamlit belum dikembangkan lebih lanjut sesuai prioritas implementasi saat ini. Endpoint Flask dan halaman dashboard masih berupa fondasi untuk tahap berikutnya.
+Dashboard Streamlit memiliki halaman Dashboard dan Workout & Cardio. Isi `DASHBOARD_TELEGRAM_ID` pada `.env` agar dashboard menampilkan data user yang sesuai.

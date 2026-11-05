@@ -10,7 +10,7 @@ load_dotenv(BASE_DIR / ".env")
 
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 DEFAULT_TIMEZONE = os.getenv("DEFAULT_TIMEZONE", "Asia/Jakarta")
-API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:5000")
+DASHBOARD_TELEGRAM_ID = os.getenv("DASHBOARD_TELEGRAM_ID", "").strip()
 
 DATABASE_CONFIG = {
     "host": os.getenv("DB_HOST", "127.0.0.1"),
