@@ -168,6 +168,38 @@ def get_recent_activities(telegram_id):
 
 
 @st.cache_data(ttl=60, show_spinner=False)
+def get_personal_records(telegram_id):
+    """Mengambil PR terbaik untuk setiap latihan."""
+    rows = _fetch_all(
+        """
+        SELECT e.exercise_name,
+               pr.weight_kg,
+               pr.repetitions,
+               pr.estimated_1rm,
+               pr.achieved_at
+        FROM personal_records pr
+        JOIN exercises e ON e.id = pr.exercise_id
+        WHERE pr.user_id = (SELECT id FROM users WHERE telegram_id = %s)
+          AND pr.estimated_1rm = (
+              SELECT MAX(pr2.estimated_1rm)
+              FROM personal_records pr2
+              WHERE pr2.user_id = pr.user_id
+                AND pr2.exercise_id = pr.exercise_id
+          )
+        ORDER BY pr.estimated_1rm DESC, e.exercise_name
+        """,
+        (telegram_id,),
+    )
+    frame = _dataframe(
+        rows,
+        ["exercise_name", "weight_kg", "repetitions", "estimated_1rm", "achieved_at"],
+    )
+    if not frame.empty:
+        frame["achieved_at"] = pd.to_datetime(frame["achieved_at"])
+    return frame
+
+
+@st.cache_data(ttl=60, show_spinner=False)
 def get_exercise_options(telegram_id):
     rows = _fetch_all(
         """

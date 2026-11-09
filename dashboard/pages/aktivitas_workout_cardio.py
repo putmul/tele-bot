@@ -22,6 +22,7 @@ from dashboard.services.analytics import (
     get_exercise_options,
     get_workout_progress,
 )
+from dashboard.services.visualization import KONFIGURASI_PLOTLY, kunci_grafik
 
 
 def _get_telegram_id():
@@ -94,7 +95,12 @@ def _history_tab(telegram_id, start_date, end_date):
         },
         title="Aktivitas berdasarkan tanggal",
     )
-    st.plotly_chart(figure, use_container_width=True)
+    kunci_grafik(figure, ada_tanggal=True)
+    st.plotly_chart(
+        figure,
+        use_container_width=True,
+        config=KONFIGURASI_PLOTLY,
+    )
 
     display = filtered.copy()
     display["Tanggal"] = display["activity_at"].dt.strftime("%d-%m-%Y %H:%M")
@@ -141,7 +147,12 @@ def _workout_progress_tab(telegram_id, start_date, end_date):
         title=f"Progres {exercise} - {metric}",
     )
     figure.update_layout(hovermode="x unified")
-    st.plotly_chart(figure, use_container_width=True)
+    kunci_grafik(figure, ada_tanggal=True)
+    st.plotly_chart(
+        figure,
+        use_container_width=True,
+        config=KONFIGURASI_PLOTLY,
+    )
 
 
 def _cardio_progress_tab(telegram_id, start_date, end_date):
@@ -172,7 +183,12 @@ def _cardio_progress_tab(telegram_id, start_date, end_date):
         title=f"Progres {activity_type} - {metric}",
     )
     figure.update_layout(hovermode="x unified")
-    st.plotly_chart(figure, use_container_width=True)
+    kunci_grafik(figure, ada_tanggal=True)
+    st.plotly_chart(
+        figure,
+        use_container_width=True,
+        config=KONFIGURASI_PLOTLY,
+    )
 
 
 telegram_id = _get_telegram_id()
@@ -184,7 +200,6 @@ if telegram_id is None:
     st.stop()
 
 st.title("Latihan & Kardio")
-st.caption("Riwayat dan progres aktivitas latihan serta kardio dalam satu halaman.")
 start_date, end_date = _period_filter()
 
 if start_date > end_date:

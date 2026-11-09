@@ -10,6 +10,7 @@ from database.repository import (
     complete_session_with_pending_sets,
     create_session,
     get_active_session,
+    get_current_pr,
     get_split_by_number,
     get_splits,
     update_session_position,
